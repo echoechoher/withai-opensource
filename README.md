@@ -1,34 +1,30 @@
 # WithAI Markdown Review
 
+<p align="right">
+  <a href="#english">English</a> | <a href="#中文">中文</a>
+</p>
+
+## English
+
 WithAI is a local-first, Markdown-native review surface for people and local agents.
 
-The source of truth is Markdown source, comment anchors, structured comments, and revisions. The web page is review-only: no online body editing, no AI chat window, and no patch preview.
+It keeps Markdown as the source of truth. The web page is only for reading, commenting, and viewing diffs; it does not become the editor for the document body. Comments are anchored to the original quote and nearby context, so an agent can read `markdown source + comments` and update the local `.md` file.
 
-## 中文速览
-
-WithAI 想解决的是本地 Markdown 和在线 review 之间的断点：owner 在本地写 Markdown，生成 reviewer link 和 owner link；reviewer 可以在渲染后的页面上直接评论，也可以让自己的本地 agent 接入 review；owner 的本地 agent 拉取 comments 后修改原始 Markdown，再发布新版本。
-
-它刻意保留 Markdown 作为 source of truth。网页负责阅读、评论、看 diff，不接管正文编辑；comments 锚定到原文 quote 和前后文，agent 读到的是 markdown source + comments，修改的也是本地 markdown。
-
-基本流程：
+### What It Does
 
 ```text
-owner 本地 Markdown
-  -> /withai-review proposal.md
-  -> 生成 Review link + Owner link
-  -> reviewer 读文档 / 写 comments / 接入自己的 agent
-  -> owner-agent 拉取 comments，修改本地 Markdown
-  -> owner 发布新版本
-  -> reviewer 刷新同一个链接看 diff
+owner local Markdown
+  -> withai review proposal.md
+  -> Review link + Owner link
+  -> reviewer reads / comments / connects their own agent
+  -> owner-agent reads comments and edits local Markdown
+  -> owner publishes a new revision
+  -> reviewer refreshes the same link and checks the diff
 ```
 
-最后一公里也提供了企业微信文档导入：第一次新建，后续覆盖更新。
-
-## Start
+### Install
 
 Requires Node.js 20+.
-
-Install the local owner command once:
 
 ```bash
 git clone https://github.com/echoechoher/withai-opensource.git
@@ -36,120 +32,109 @@ cd withai-opensource
 npm link
 ```
 
-After that, `withai` works from any terminal directory. It stores review data in this project unless you override `WITHAI_ROOT` or pass `--root`.
+After `npm link`, the `withai` command is available from any terminal directory.
+
+`WITHAI_ROOT` only controls where review state, runtime config, and local context files are stored. It does not need to point to this package's install directory.
+
+### Start The Server
+
+For local-only use:
+
+```bash
+withai start --noTunnel --port 4174
+```
+
+Open:
+
+```text
+http://127.0.0.1:4174/
+```
+
+For a public review link, install and log in to `ngrok`, then run:
 
 ```bash
 withai start
 ```
 
-This starts the local server, starts an `ngrok` tunnel, writes `.withai/runtime.json`, and prints active reviews with real owner/reviewer links.
-
-For a stable public review URL, reserve an ngrok domain and start WithAI with that URL:
-
-```bash
-withai start --port 4174 --url https://your-domain.ngrok.app
-```
-
-or:
-
-```bash
-WITHAI_PUBLIC_URL=https://your-domain.ngrok.app withai start --port 4174
-```
-
-Or save it once with `configure` and forget about flags:
+For a stable public URL:
 
 ```bash
 withai configure --public-url https://your-domain.ngrok.app --port 4174
 withai start
 ```
 
-Only the owner runs this service. Reviewer does not run WithAI; reviewer only opens the `Review link`. The link stays stable when using a reserved ngrok URL, but it is reachable only while the owner's machine, WithAI, and ngrok are running.
+Only the owner needs to run WithAI. Reviewers open the `Review link`. Public links are reachable only while the owner's machine, WithAI server, and ngrok tunnel are running.
 
-For local-only development:
+### Create A Review
 
-```bash
-withai start --noTunnel --port 4174
-```
-
-Then open the local console:
-
-```text
-http://127.0.0.1:4174/
-```
-
-The browser console shows active reviews without exposing secret links. The owner CLI prints real links because it runs locally on the owner's machine. If you lose a link, recover it from the CLI:
-
-```bash
-withai links <review_id>
-```
-
-## Create Review Links
-
-In Claude Code, use the skill:
-
-```
-/withai-review proposal.md
-```
-
-Or use the CLI directly:
+From the folder containing your Markdown file:
 
 ```bash
 withai review proposal.md --title "Proposal"
 ```
 
-`withai share` is kept as an alias, but `review` is the recommended user-facing command.
-
 The command prints:
 
-- `Review link`: for reviewer. They can read, comment, and create an agent session.
-- `Owner link`: for owner. Owner can publish and resolve.
-- `Agent context`: local Markdown/JSON context under `.withai/reviews/<review_id>/`.
+- `Review link`: for reviewers. They can read, comment, and create an agent session.
+- `Owner link`: for the owner. The owner can publish new revisions and resolve comments.
+- `Agent context`: local context files under `.withai/reviews/<review_id>/`.
 
-Generated state lives in `.withai/reviews/<review_id>/`, and `.withai/` is git ignored.
-
-The owner link is not an online editor. Owner edits the local `.md` file, then publishes a new revision through `watch` or `publish`.
-
-## Daily Review Flow
-
-1. Reviewer opens the review link.
-2. Reviewer selects text and writes comments in the right panel.
-3. Reviewer can click `Agent review` to copy a bridge command for their local agent.
-4. The agent reads Markdown, comments, and rules through the bridge.
-5. The agent can write comments and resolve them.
-6. Owner edits the local `.md` file.
-7. WithAI publishes a new revision through watch or CLI.
-8. Reviewer opens version history on the same link.
-9. Owner resolves comments manually from the owner link.
-
-Human comment authors are derived from the link type: owner link writes as `owner`; review link writes as `reviewer`.
-
-The root page is a local owner console. It lists active reviews and recovery commands, but it does not expose owner/reviewer/agent secrets through unauthenticated APIs.
-
-## Publish Revisions
-
-Automatic watch:
+If you lose the links:
 
 ```bash
-withai watch <review_id>
+withai links <review_id>
 ```
 
-Manual publish:
+### Local Smoke Test
+
+Use two terminals.
+
+Terminal A:
+
+```bash
+withai start --noTunnel --port 4174
+```
+
+Terminal B:
+
+```bash
+mkdir -p /tmp/withai-demo
+cd /tmp/withai-demo
+printf '# Proposal\n\nThis line needs review.\n' > proposal.md
+withai review proposal.md --title "Proposal"
+```
+
+Open the printed `Review link` or `Owner link`. If you create a review before starting the server, WithAI will warn you, but the review is still created and the link will work after the server starts.
+
+### Publish Updates
+
+After editing the local Markdown file, publish a new revision:
 
 ```bash
 withai publish <review_id> proposal.md --author owner-agent
 ```
 
-Version history shows a full-document diff. Comment references appear only when the comment anchor overlaps a changed range; this does not resolve the comment.
+Or watch the source file and publish automatically:
 
-## Agent Bridge
+```bash
+withai watch <review_id>
+```
 
-The web `Agent review` modal generates a zero-install Node command for reviewer or reviewer-agent.
+The same review link will show version history and a full-document diff.
 
-That command prints an agent-ready task prompt: read the Markdown and write structured comments back to WithAI. The expected behavior is not "return suggestions in chat"; the expected behavior is "create comments in the review page, then summarize what was written."
+### Agent Bridge
 
-When `withai start` is running with ngrok, the command uses the public tunnel origin. Without a tunnel, it uses local `127.0.0.1` and only works on the owner's machine.
+The web `Agent review` modal generates a zero-install Node command for a reviewer agent.
 
-If reviewer wants their local agent to use files from their own workspace as extra context, they can open that workspace in the agent first, then run the copied command there. The command itself does not install WithAI on their machine.
+You can create an agent session from the web modal, or through the HTTP API:
+
+```bash
+curl -X POST '<server>/api/reviews/<review_id>/agent-sessions?secret=<reviewer_secret>' \
+  -H 'content-type: application/json' \
+  --data '{"author":"reviewer-agent"}'
+```
+
+The response contains the `token` used by `withai bridge`.
 
 Read context:
 
@@ -160,18 +145,18 @@ withai bridge --server <public_origin> --review <review_id> --token <agent_token
 Write an agent comment:
 
 ```bash
-withai bridge --server <public_origin> --review <review_id> --token <agent_token> --quote "这里需要补充原因" --body "建议补充原因说明"
+withai bridge --server <public_origin> --review <review_id> --token <agent_token> --quote "text to comment on" --body "comment body"
 ```
 
-Agent rules:
+Agent permissions:
 
 - Agents can read context.
 - Agents can write structured comments.
 - Agents can resolve comments.
-- Agents cannot edit Markdown.
+- Agents cannot edit Markdown directly.
 - Agents cannot publish revisions.
 
-## MCP
+### MCP
 
 Run the local MCP server:
 
@@ -187,7 +172,7 @@ withai://reviews/<review_id>/context.json
 withai_write_comment
 ```
 
-Example Codex/Claude Code config:
+Example config:
 
 ```json
 {
@@ -203,48 +188,240 @@ Example Codex/Claude Code config:
 }
 ```
 
-## Health And Security
+### Optional: Push To WeCom Docs
+
+The owner page includes a WeCom Docs push button. It creates a document the first time and overwrites the same document on later pushes.
+
+This requires `wecom-cli` to be installed and authorized on the owner's machine.
+
+### Health And Config
 
 ```bash
 withai doctor
 withai rotate <review_id> --reviewer
 withai rotate <review_id> --owner
 withai revoke-agent <review_id> <agent_session_id>
-```
-
-## Persistent Config
-
-```bash
-withai configure --public-url https://your-domain.ngrok.app --port 4174
-withai configure --no-tunnel
 withai configure            # print current config
 withai configure --reset    # delete config
 ```
 
 Config is saved to `.withai/config.json`. Priority: CLI flags > env vars > config.json > defaults.
 
-## Auto-Start (LaunchAgent)
-
-```bash
-withai launch           # install macOS LaunchAgent, auto-start on login
-withai launch status    # check daemon PID and server health
-withai launch stop      # uninstall LaunchAgent
-```
-
-After `withai launch`, the server starts automatically on login, restarts on crash (`KeepAlive`), and logs to `.withai/logs/`. No need to keep a terminal open.
-
-Secret link permissions:
-
-- Owner token: read, comment, publish, resolve.
-- Reviewer token: read, comment, create agent session.
-- Agent token: read context, write comments.
-
-API responses do not return owner/reviewer/share tokens. Agent context omits owner/reviewer/share tokens.
-
-## Tests
+### Tests
 
 ```bash
 npm test
 ```
 
-The tests cover quote-based anchoring, disambiguation with before/after context, comment lifecycle (create, edit, resolve, reopen), revision publishing, version history diffs, permission boundaries, token rotation, agent revocation, HTTP API security, MCP resources, and MCP comment writes.
+The tests cover quote anchoring, comment lifecycle, revision publishing, version history diffs, permission boundaries, token rotation, agent revocation, HTTP API security, MCP resources, and MCP comment writes.
+
+## 中文
+
+WithAI 是一个本地优先、Markdown 原生的 review 工具。它主要解决本地 Markdown 和在线 comments 之间的断点。
+
+它保留 Markdown 作为 source of truth。网页只负责阅读、评论、看 diff，不接管正文编辑；comments 会锚定到原文 quote 和前后文，所以 agent 读到的是 `markdown source + comments`，修改的也是本地 `.md` 文件。
+
+### 它解决什么
+
+```text
+owner 本地 Markdown
+  -> withai review proposal.md
+  -> 生成 Review link + Owner link
+  -> reviewer 读文档 / 写 comments / 接入自己的 agent
+  -> owner-agent 拉取 comments，修改本地 Markdown
+  -> owner 发布新版本
+  -> reviewer 刷新同一个链接看 diff
+```
+
+### 安装
+
+需要 Node.js 20+。
+
+```bash
+git clone https://github.com/echoechoher/withai-opensource.git
+cd withai-opensource
+npm link
+```
+
+执行 `npm link` 后，任何终端目录里都可以使用 `withai` 命令。
+
+`WITHAI_ROOT` 只控制 review state、runtime config 和本地 context 文件的存放位置，不需要指向 WithAI 这个 package 的安装目录。
+
+### 启动服务
+
+只在本地使用：
+
+```bash
+withai start --noTunnel --port 4174
+```
+
+打开：
+
+```text
+http://127.0.0.1:4174/
+```
+
+如果想生成公网 review link，需要先安装并登录 `ngrok`，然后运行：
+
+```bash
+withai start
+```
+
+如果想使用稳定公网 URL：
+
+```bash
+withai configure --public-url https://your-domain.ngrok.app --port 4174
+withai start
+```
+
+只有 owner 需要运行 WithAI。reviewer 只需要打开 `Review link`。公网链接能访问的前提是 owner 的电脑、WithAI 服务和 ngrok tunnel 都在运行。
+
+### 创建 Review
+
+在你的 Markdown 文件所在目录运行：
+
+```bash
+withai review proposal.md --title "Proposal"
+```
+
+命令会输出：
+
+- `Review link`：给 reviewer，用来阅读、评论、创建 agent session。
+- `Owner link`：owner 自己保留，用来发布新版本、resolve comments。
+- `Agent context`：本地上下文文件，位于 `.withai/reviews/<review_id>/`。
+
+如果链接丢了：
+
+```bash
+withai links <review_id>
+```
+
+### 本地快速验收
+
+使用两个终端。
+
+终端 A：
+
+```bash
+withai start --noTunnel --port 4174
+```
+
+终端 B：
+
+```bash
+mkdir -p /tmp/withai-demo
+cd /tmp/withai-demo
+printf '# Proposal\n\nThis line needs review.\n' > proposal.md
+withai review proposal.md --title "Proposal"
+```
+
+打开命令输出的 `Review link` 或 `Owner link`。如果你先创建 review、后启动 server，WithAI 会提示 server 当前不可访问，但 review 仍然会创建；server 启动后链接就能打开。
+
+### 发布更新
+
+修改本地 Markdown 后，手动发布新版本：
+
+```bash
+withai publish <review_id> proposal.md --author owner-agent
+```
+
+也可以监听源文件，自动发布：
+
+```bash
+withai watch <review_id>
+```
+
+reviewer 刷新同一个链接，就能看到 version history 和全文 diff。
+
+### Agent Bridge
+
+网页里的 `Agent review` 会生成一条零安装 Node 命令，给 reviewer 的本地 agent 使用。
+
+你可以从网页弹窗创建 agent session，也可以用 HTTP API 创建：
+
+```bash
+curl -X POST '<server>/api/reviews/<review_id>/agent-sessions?secret=<reviewer_secret>' \
+  -H 'content-type: application/json' \
+  --data '{"author":"reviewer-agent"}'
+```
+
+返回结果里的 `token` 会用于 `withai bridge`。
+
+读取上下文：
+
+```bash
+withai bridge --server <public_origin> --review <review_id> --token <agent_token>
+```
+
+写入 agent comment：
+
+```bash
+withai bridge --server <public_origin> --review <review_id> --token <agent_token> --quote "要评论的原文" --body "评论内容"
+```
+
+Agent 权限：
+
+- 可以读取上下文；
+- 可以写 structured comments；
+- 可以 resolve comments；
+- 不能直接编辑 Markdown；
+- 不能发布新版本。
+
+### MCP
+
+启动本地 MCP server：
+
+```bash
+npm run mcp
+```
+
+它暴露：
+
+```text
+withai://reviews/<review_id>/context.md
+withai://reviews/<review_id>/context.json
+withai_write_comment
+```
+
+配置示例：
+
+```json
+{
+  "mcpServers": {
+    "withai": {
+      "command": "node",
+      "args": ["/absolute/path/to/withai-opensource/src/mcp/withai-mcp.mjs"],
+      "env": {
+        "WITHAI_ROOT": "/absolute/path/to/your/markdown-workspace"
+      }
+    }
+  }
+}
+```
+
+### 可选：导入企业微信文档
+
+owner 页面提供企业微信文档导入按钮。第一次会新建文档，后续会覆盖更新同一个文档。
+
+这个能力依赖 owner 本机安装并授权 `wecom-cli`。
+
+### 健康检查和配置
+
+```bash
+withai doctor
+withai rotate <review_id> --reviewer
+withai rotate <review_id> --owner
+withai revoke-agent <review_id> <agent_session_id>
+withai configure            # 查看当前配置
+withai configure --reset    # 删除配置
+```
+
+配置保存在 `.withai/config.json`。优先级是：CLI flags > env vars > config.json > defaults。
+
+### 测试
+
+```bash
+npm test
+```
+
+测试覆盖 quote anchoring、comments 生命周期、revision 发布、version history diff、权限边界、token rotation、agent revocation、HTTP API security、MCP resources 和 MCP comment writes。

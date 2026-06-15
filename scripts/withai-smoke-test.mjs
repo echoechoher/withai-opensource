@@ -6,7 +6,7 @@ import { createWithAiServer } from "../src/server/app.mjs";
 import { createReviewStore } from "../src/server/store/review-store.mjs";
 
 const root = mkdtempSync(join(tmpdir(), "withai-smoke-"));
-const mdPath = join(root, "product-design.md");
+const mdPath = join(root, "proposal.md");
 const initialMarkdown = `# Product Design
 
 Same quote.

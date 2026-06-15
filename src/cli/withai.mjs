@@ -611,7 +611,7 @@ async function httpOk(url) {
 }
 
 async function mcpSmoke() {
-  return existsSync(join(projectRoot, "src", "mcp", "withai-mcp.mjs"));
+  return existsSync(join(installRoot, "src", "mcp", "withai-mcp.mjs"));
 }
 
 function printHelp() {
