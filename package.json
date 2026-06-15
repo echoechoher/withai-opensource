@@ -1,0 +1,18 @@
+{
+  "name": "withai-markdown-review",
+  "version": "0.1.0",
+  "description": "Local-first, Markdown-native review links for people and local agents.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "serve": "node src/server/app.mjs",
+    "withai": "node src/cli/withai.mjs",
+    "mcp": "node src/mcp/withai-mcp.mjs",
+    "test": "node scripts/withai-smoke-test.mjs && node scripts/withai-mcp-smoke-test.mjs && node scripts/withai-test-suite.mjs"
+  },
+  "bin": {
+    "withai": "src/cli/withai.mjs",
+    "withai-bridge": "src/cli/withai.mjs",
+    "withai-mcp": "src/mcp/withai-mcp.mjs"
+  }
+}

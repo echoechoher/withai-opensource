@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WithAI Markdown Review</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <svg aria-hidden="true" class="icon-sprite">
+    <symbol id="icon-clock" viewBox="0 0 24 24">
+      <path d="M12 7v5l3 2"></path>
+      <circle cx="12" cy="12" r="8.5"></circle>
+    </symbol>
+    <symbol id="icon-agent" viewBox="0 0 24 24">
+      <path d="M12 4.5v3"></path>
+      <path d="M8 4.5h8"></path>
+      <rect x="5" y="7.5" width="14" height="11" rx="3"></rect>
+      <path d="M9 12h.01"></path>
+      <path d="M15 12h.01"></path>
+      <path d="M9.5 15.5h5"></path>
+    </symbol>
+    <symbol id="icon-push" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </symbol>
+  </svg>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <strong class="brand">WithAI</strong>
+      <div class="topbar-actions" id="review-actions" hidden>
+        <button class="toolbar-button icon-only" id="push-wecom-button" type="button" hidden>
+          <svg class="icon"><use href="#icon-push"></use></svg>
+          <span class="btn-tooltip">Push to WeCom Doc</span>
+        </button>
+        <button class="toolbar-button icon-only" id="history-button" type="button">
+          <svg class="icon"><use href="#icon-clock"></use></svg>
+          <span class="btn-tooltip">History</span>
+        </button>
+        <button class="toolbar-button primary" id="agent-button" type="button">
+          <svg class="icon"><use href="#icon-agent"></use></svg>
+          <span>Agent review</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="home-view" id="home-view" hidden>
+      <div class="home-card">
+        <h1>WithAI Markdown Review</h1>
+        <p>Local Markdown review is running. Open an existing review link, or create one from the CLI.</p>
+        <code>withai share product-design.md</code>
+        <div class="home-section">
+          <h2>Active reviews</h2>
+          <div class="home-review-list" id="home-review-list"></div>
+        </div>
+        <div class="home-section">
+          <h2>Recover links</h2>
+          <p>Secret links are not shown on this page. Reprint them locally:</p>
+          <code>withai links &lt;review_id&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-view" id="loading-view">
+      <div class="home-card">
+        <h1>Loading review</h1>
+        <p>Connecting to your local WithAI server.</p>
+      </div>
+    </section>
+
+    <section class="home-view" id="error-view" hidden>
+      <div class="home-card">
+        <h1>Review unavailable</h1>
+        <p id="error-message">This review link is invalid or the local server is disconnected.</p>
+      </div>
+    </section>
+
+    <section class="review-layout" id="review-view" hidden>
+      <article class="document-shell">
+        <div class="document" id="document"></div>
+      </article>
+
+      <aside class="comments-panel">
+        <div class="owner-note" id="owner-note" hidden></div>
+        <div class="panel-head">
+          <h2 id="panel-title">Open comments</h2>
+          <div class="panel-actions">
+            <span class="meta" id="comment-count"></span>
+            <button class="text-button" id="archive-toggle" type="button">Archive</button>
+          </div>
+        </div>
+
+        <form class="composer" id="composer" hidden>
+          <div class="composer-head">
+            <label for="comment-body">New comment</label>
+            <div class="composer-actions">
+              <button class="text-button" id="cancel-comment" type="button">Cancel</button>
+              <button class="text-button" id="send-comment" type="submit">Send</button>
+            </div>
+          </div>
+          <textarea id="comment-body" rows="3"></textarea>
+        </form>
+
+        <div class="comments-list" id="comments-list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="selection-toolbar" id="selection-toolbar" hidden>
+    <button type="button" id="comment-selection">Comment</button>
+  </div>
+
+  <dialog class="modal" id="agent-modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-head">
+        <h2>Let your agent review this Markdown</h2>
+        <button class="text-button" value="cancel" type="submit">Close</button>
+      </div>
+      <p class="meta">Copy this into your local agent. It will fetch a review task prompt and tell the agent to write comments back to WithAI.</p>
+      <p class="meta" id="agent-origin-note"></p>
+      <pre class="command" id="agent-command"></pre>
+      <button class="toolbar-button primary" id="copy-agent-command" type="button">Copy agent task</button>
+    </form>
+  </dialog>
+
+  <dialog class="modal wide" id="history-modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-head">
+        <h2>Version history</h2>
+        <button class="text-button" value="cancel" type="submit">Close</button>
+      </div>
+      <div class="history-grid">
+        <div class="version-list" id="version-list"></div>
+        <div class="diff-panel" id="diff-panel"></div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
